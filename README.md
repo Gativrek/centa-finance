@@ -1,5 +1,9 @@
 # Centa
 
+![License: MIT](https://img.shields.io/badge/License-MIT-7b5cb8.svg)
+![Platform: Android](https://img.shields.io/badge/platform-Android-0078D6.svg)
+![Built with Capacitor](https://img.shields.io/badge/built%20with-Capacitor-47848F.svg)
+
 **A private, on-device personal finance tracker.** Log income, expenses and
 savings, plan budgets and goals, track recurring subscriptions, and see it all on a
 dashboard and in charts — in English or Brazilian Portuguese.
