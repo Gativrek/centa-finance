@@ -88,6 +88,7 @@ function renderPage(id) {
     case 'dashboard':    renderDashboard(); break;
     case 'transactions': renderTransactions(); break;
     case 'budgets':      renderBudgets(); break;
+    case 'charts':       renderCharts(); break;
   }
 }
 

@@ -199,6 +199,37 @@
     </div>
   </div>
 
+  <!-- ── CHARTS ── -->
+  <div id="page-charts" class="page">
+    <div class="page-header">
+      <h1 data-i18n="charts">Charts</h1>
+    </div>
+
+    <div class="month-nav">
+      <button data-month-delta="-1">‹</button>
+      <span id="charts-month-label"></span>
+      <button data-month-delta="1">›</button>
+    </div>
+
+    <div class="section-title" data-i18n="chart_expenses">Expenses by Category</div>
+    <div class="card">
+      <div class="donut-chart-row" id="expense-chart"></div>
+    </div>
+
+    <div id="charts-insights"></div>
+
+    <div class="section-title" data-i18n="chart_savings">Savings Breakdown</div>
+    <div class="card">
+      <div class="donut-chart-row" id="savings-chart"></div>
+    </div>
+
+    <div class="section-title" data-i18n="chart_bar">Income vs Expenses vs Savings — Last 6 Months</div>
+    <div class="card">
+      <div class="chart-wrap">
+        <canvas id="bar-chart"></canvas>
+      </div>
+    </div>
+  </div>
 
   <!-- ── EDIT TRANSACTION MODAL ── -->
   <div id="edit-overlay" class="modal-overlay" onclick="if(event.target===this)closeEditModal()">
@@ -556,6 +587,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
       <span data-i18n="nav_plan">Plan</span>
     </button>
+    <button data-page="charts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span data-i18n="nav_charts">Charts</span>
+    </button>
   </nav>
 </div>
 
@@ -572,6 +607,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/transactions.js"></script>
 <script src="js/plan.js"></script>
+<script src="js/charts.js"></script>
 <script src="js/backup.js"></script>
 <script src="js/recurring.js"></script>
 <script src="js/edit.js"></script>
