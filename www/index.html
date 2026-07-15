@@ -12,7 +12,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script>
-    // Paint the saved theme before anything renders, to avoid a flash.
     (function () {
       try {
         var th = localStorage.getItem('ft_theme') || 'system';
@@ -28,7 +27,554 @@
 </head>
 <body>
 <div id="app">
-  <!-- App screens and scripts are added in the following commits. -->
+
+  <!-- ── DASHBOARD ── -->
+  <div id="page-dashboard" class="page">
+    <div class="page-header">
+      <h1 data-i18n="app_name">Centa</h1>
+      <span style="font-size:11px;opacity:0.45;position:absolute;right:16px;top:50%;transform:translateY(-50%)">v3.1</span>
+    </div>
+
+    <div class="month-nav">
+      <button data-month-delta="-1">‹</button>
+      <span id="dash-month-label"></span>
+      <button data-month-delta="1">›</button>
+    </div>
+
+    <div class="card balance-card">
+      <div class="label" data-i18n="running_balance">Running Balance</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+        <div class="amount" id="dash-balance">$0.00</div>
+        <button onclick="toggleBalance()" aria-label="Toggle balance visibility" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.6);padding:0;display:flex;align-items:center">
+          <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+      <div id="balance-spark" class="balance-spark"></div>
+      <div class="sub">
+        <div><div class="s-label" data-i18n="s_income">↑ Income</div><div class="s-val" id="dash-income">$0.00</div></div>
+        <div><div class="s-label" data-i18n="s_expenses">↓ Expenses</div><div class="s-val" id="dash-expense">$0.00</div></div>
+        <div><div class="s-label" data-i18n="s_savings">🏦 Savings</div><div class="s-val" id="dash-savings">$0.00</div></div>
+      </div>
+    </div>
+
+    <div id="dash-donuts" class="donut-row"></div>
+
+    <div class="section-title" data-i18n="budget_overview">Budget Overview</div>
+    <div class="card card-sm" id="dash-budgets"></div>
+
+    <div id="dash-recurring"></div>
+
+    <div class="section-title" data-i18n="recent_tx">Recent Transactions</div>
+    <div class="card" style="padding:0;overflow:hidden" id="dash-recent"></div>
+  </div>
+
+  <!-- ── ADD ── -->
+  <div id="page-add" class="page">
+    <div class="page-header">
+      <h1 data-i18n="add_transaction">Add Transaction</h1>
+    </div>
+
+    <form id="add-form" class="card">
+      <div class="form-group">
+        <label data-i18n="type">Type</label>
+        <div class="type-toggle">
+          <button type="button" id="add-expense-btn" class="type-btn active-expense" data-i18n="t_expense">Expense</button>
+          <button type="button" id="add-income-btn"  class="type-btn" data-i18n="t_income">Income</button>
+          <button type="button" id="add-savings-btn" class="type-btn" data-i18n="t_savings">Savings</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="amount">Amount</label>
+        <input id="add-amount" type="text" inputmode="numeric" placeholder="R$ 0,00" required autocomplete="off" autocorrect="off" spellcheck="false" />
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="category">Category</label>
+        <select id="add-category"></select>
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="date">Date</label>
+        <input id="add-date" type="date" required />
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="notes_optional">Notes (optional)</label>
+        <textarea id="add-notes" placeholder="Add a note…" data-i18n-ph="ph_note"></textarea>
+      </div>
+
+      <button type="submit" class="btn" data-i18n="add_transaction">Add Transaction</button>
+    </form>
+  </div>
+
+  <!-- ── TRANSACTIONS ── -->
+  <div id="page-transactions" class="page">
+    <div class="page-header">
+      <h1 data-i18n="history">Transactions</h1>
+    </div>
+
+    <div class="month-nav">
+      <button data-month-delta="-1">‹</button>
+      <span id="tx-month-label"></span>
+      <button data-month-delta="1">›</button>
+    </div>
+
+    <div class="view-tabs">
+      <button class="view-tab active" id="view-cal-btn" data-i18n="view_calendar">📅 Calendar</button>
+      <button class="view-tab" id="view-list-btn" data-i18n="view_list">≡ List</button>
+    </div>
+
+    <!-- List view -->
+    <div id="tx-list-view" style="display:none">
+      <div class="form-group" style="margin-bottom:8px">
+        <input id="tx-search" type="search" placeholder="Search transactions…" data-i18n-ph="search_tx"
+          autocomplete="off" oninput="onTxSearch(this.value)" />
+      </div>
+      <div class="filter-row">
+        <button class="filter-chip active" data-filter="all" data-i18n="f_all">All</button>
+        <button class="filter-chip" data-filter="expense" data-i18n="f_expenses">Expenses</button>
+        <button class="filter-chip" data-filter="income" data-i18n="f_income">Income</button>
+        <button class="filter-chip" data-filter="savings" data-i18n="f_savings">Savings</button>
+      </div>
+      <div id="tx-search-hint" style="display:none;font-size:12px;color:var(--muted);margin:0 2px 8px"></div>
+      <div class="card" style="padding:0;overflow:hidden" id="tx-list"></div>
+    </div>
+
+    <!-- Calendar view -->
+    <div id="tx-cal-view">
+      <div class="card" style="padding:12px 8px">
+        <div class="cal-header">
+          <span data-i18n="cal_sun">Sun</span><span data-i18n="cal_mon">Mon</span><span data-i18n="cal_tue">Tue</span><span data-i18n="cal_wed">Wed</span><span data-i18n="cal_thu">Thu</span><span data-i18n="cal_fri">Fri</span><span data-i18n="cal_sat">Sat</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div id="cal-detail"></div>
+    </div>
+
+  </div>
+
+  <!-- ── PLAN ── -->
+  <div id="page-budgets" class="page">
+    <div class="page-header">
+      <h1 data-i18n="plan">Plan</h1>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div class="plan-tabs">
+      <button class="plan-tab active" data-plan="categories" onclick="setPlanTab('categories')" data-i18n="pt_categories">Categories</button>
+      <button class="plan-tab" data-plan="goals" onclick="setPlanTab('goals')" data-i18n="pt_goals">Goals</button>
+      <button class="plan-tab" data-plan="subs" onclick="setPlanTab('subs')" data-i18n="pt_subs">Subs</button>
+      <button class="plan-tab" data-plan="budgets" onclick="setPlanTab('budgets')" data-i18n="pt_budgets">Budgets</button>
+    </div>
+
+    <!-- Categories panel -->
+    <div class="plan-panel active" id="plan-categories">
+      <div class="view-tabs" style="margin-bottom:8px">
+        <button class="view-tab active" id="cat-tab-expense" onclick="setCatTab('expense')" data-i18n="cat_tab_expense">💸 Expense</button>
+        <button class="view-tab" id="cat-tab-income" onclick="setCatTab('income')" data-i18n="cat_tab_income">💰 Income</button>
+      </div>
+      <div id="cat-list-wrap"></div>
+      <button class="btn btn-outline plan-add" onclick="openSheet('sheet-cat')" data-i18n="add_category_btn">+ Add category</button>
+    </div>
+
+    <!-- Goals panel -->
+    <div class="plan-panel" id="plan-goals">
+      <div id="goal-list-wrap"></div>
+      <button class="btn btn-outline plan-add" onclick="openSheet('sheet-goal')" data-i18n="new_goal_btn">+ New goal</button>
+    </div>
+
+    <!-- Subscriptions panel -->
+    <div class="plan-panel" id="plan-subs">
+      <div class="card card-sm" id="recurring-list"></div>
+      <button class="btn btn-outline plan-add" onclick="openRecSheet()" data-i18n="add_sub_btn">+ Add subscription</button>
+    </div>
+
+    <!-- Budgets panel -->
+    <div class="plan-panel" id="plan-budgets">
+      <div class="card card-sm" id="budget-list"></div>
+      <button class="btn btn-outline plan-add" onclick="openSheet('sheet-budget')" data-i18n="add_budget_btn">+ Add budget</button>
+    </div>
+  </div>
+
+
+  <!-- ── EDIT TRANSACTION MODAL ── -->
+  <div id="edit-overlay" class="modal-overlay" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="edit_transaction">Edit Transaction</h2>
+      <div class="form-group">
+        <label data-i18n="type">Type</label>
+        <div class="type-toggle">
+          <button type="button" id="edit-expense-btn" class="type-btn active-expense" data-i18n="t_expense">Expense</button>
+          <button type="button" id="edit-income-btn"  class="type-btn" data-i18n="t_income">Income</button>
+          <button type="button" id="edit-savings-btn" class="type-btn" data-i18n="t_savings">Savings</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="amount">Amount</label>
+        <input id="edit-amount" type="text" inputmode="numeric" placeholder="$0.00" autocomplete="off" autocorrect="off" spellcheck="false" />
+      </div>
+      <div class="form-group">
+        <label data-i18n="category">Category</label>
+        <select id="edit-category"></select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="date">Date</label>
+        <input id="edit-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label data-i18n="notes_optional">Notes (optional)</label>
+        <textarea id="edit-notes" placeholder="Add a note…" data-i18n-ph="ph_note"></textarea>
+      </div>
+      <div class="form-group" id="edit-move-group" style="display:none">
+        <label data-i18n="move_to_profile">Move to profile</label>
+        <select id="edit-move-profile" onchange="moveTxToProfile(this.value)"></select>
+      </div>
+      <button class="btn" onclick="submitEditTx()" data-i18n="save_changes">Save Changes</button>
+      <button class="btn btn-outline" onclick="duplicateTx()" data-i18n="duplicate">⧉ Duplicate</button>
+      <button class="btn btn-outline" onclick="closeEditModal()" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ── PLAN ADD SHEETS ── -->
+  <div id="sheet-cat" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-cat')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="new_category">New category</h2>
+      <form id="cat-form">
+        <div class="form-group">
+          <label data-i18n="emoji">Emoji</label>
+          <div class="emoji-picker" id="cat-emoji-picker">
+            <button type="button" class="emoji-btn active" data-emoji="📦">📦</button>
+            <button type="button" class="emoji-btn" data-emoji="🐾">🐾</button>
+            <button type="button" class="emoji-btn" data-emoji="💄">💄</button>
+            <button type="button" class="emoji-btn" data-emoji="✂️">✂️</button>
+            <button type="button" class="emoji-btn" data-emoji="🍺">🍺</button>
+            <button type="button" class="emoji-btn" data-emoji="🎸">🎸</button>
+            <button type="button" class="emoji-btn" data-emoji="🎨">🎨</button>
+            <button type="button" class="emoji-btn" data-emoji="🏆">🏆</button>
+            <button type="button" class="emoji-btn" data-emoji="🌿">🌿</button>
+            <button type="button" class="emoji-btn" data-emoji="🧘">🧘</button>
+            <button type="button" class="emoji-btn" data-emoji="⚽">⚽</button>
+            <button type="button" class="emoji-btn" data-emoji="🎂">🎂</button>
+            <button type="button" class="emoji-btn" data-emoji="👶">👶</button>
+            <button type="button" class="emoji-btn" data-emoji="🔧">🔧</button>
+            <button type="button" class="emoji-btn" data-emoji="🏠">🏠</button>
+          </div>
+          <input type="hidden" id="cat-emoji" value="📦" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="name">Name</label>
+          <input id="cat-name" type="text" placeholder="Pet Care" data-i18n-ph="ph_cat" required />
+        </div>
+        <button type="submit" class="btn" data-i18n="add_category">Add Category</button>
+      </form>
+      <button class="btn btn-outline" onclick="closeSheet('sheet-cat')" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="sheet-goal" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-goal')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="new_goal">New goal</h2>
+      <form id="goal-form">
+        <div class="form-group">
+          <label data-i18n="emoji">Emoji</label>
+          <div class="emoji-picker" id="goal-emoji-picker">
+            <button type="button" class="emoji-btn active" data-emoji="🎯">🎯</button>
+            <button type="button" class="emoji-btn" data-emoji="✈️">✈️</button>
+            <button type="button" class="emoji-btn" data-emoji="🏠">🏠</button>
+            <button type="button" class="emoji-btn" data-emoji="🚗">🚗</button>
+            <button type="button" class="emoji-btn" data-emoji="💍">💍</button>
+            <button type="button" class="emoji-btn" data-emoji="🎓">🎓</button>
+            <button type="button" class="emoji-btn" data-emoji="🏖️">🏖️</button>
+            <button type="button" class="emoji-btn" data-emoji="💰">💰</button>
+            <button type="button" class="emoji-btn" data-emoji="📱">📱</button>
+            <button type="button" class="emoji-btn" data-emoji="💻">💻</button>
+            <button type="button" class="emoji-btn" data-emoji="🎁">🎁</button>
+            <button type="button" class="emoji-btn" data-emoji="🏋️">🏋️</button>
+            <button type="button" class="emoji-btn" data-emoji="🌎">🌎</button>
+            <button type="button" class="emoji-btn" data-emoji="🏥">🏥</button>
+            <button type="button" class="emoji-btn" data-emoji="🎨">🎨</button>
+          </div>
+          <input type="hidden" id="goal-emoji" value="🎯" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="name">Name</label>
+          <input id="goal-name" type="text" placeholder="Trip to Europe" data-i18n-ph="ph_goal" required />
+        </div>
+        <div class="form-group">
+          <label data-i18n="target_amount">Target Amount</label>
+          <input id="goal-amount" type="text" inputmode="numeric" placeholder="$0.00" required autocomplete="off" autocorrect="off" spellcheck="false" />
+        </div>
+        <button type="submit" class="btn" data-i18n="create_goal">Create Goal</button>
+      </form>
+      <button class="btn btn-outline" onclick="closeSheet('sheet-goal')" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="sheet-rec" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-rec')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 id="rec-sheet-title" data-i18n="add_subscription_title">Add subscription</h2>
+      <form id="recurring-form">
+        <div class="form-group">
+          <label data-i18n="emoji">Emoji</label>
+          <div class="emoji-picker" id="rec-emoji-picker">
+            <button type="button" class="emoji-btn active" data-emoji="💳">💳</button>
+            <button type="button" class="emoji-btn" data-emoji="🎬">🎬</button>
+            <button type="button" class="emoji-btn" data-emoji="🎵">🎵</button>
+            <button type="button" class="emoji-btn" data-emoji="📺">📺</button>
+            <button type="button" class="emoji-btn" data-emoji="🎮">🎮</button>
+            <button type="button" class="emoji-btn" data-emoji="💻">💻</button>
+            <button type="button" class="emoji-btn" data-emoji="📚">📚</button>
+            <button type="button" class="emoji-btn" data-emoji="🤖">🤖</button>
+            <button type="button" class="emoji-btn" data-emoji="☁️">☁️</button>
+            <button type="button" class="emoji-btn" data-emoji="📱">📱</button>
+            <button type="button" class="emoji-btn" data-emoji="🏋️">🏋️</button>
+            <button type="button" class="emoji-btn" data-emoji="🎓">🎓</button>
+            <button type="button" class="emoji-btn" data-emoji="🛒">🛒</button>
+            <button type="button" class="emoji-btn" data-emoji="📰">📰</button>
+            <button type="button" class="emoji-btn" data-emoji="🔐">🔐</button>
+          </div>
+          <input type="hidden" id="rec-emoji" value="💳" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="name">Name</label>
+          <input id="rec-name" type="text" placeholder="Netflix" required />
+        </div>
+        <div class="form-group">
+          <label id="rec-amount-label" data-i18n="monthly_amount">Amount</label>
+          <input id="rec-amount" type="text" inputmode="numeric" placeholder="$0.00" required autocomplete="off" autocorrect="off" spellcheck="false" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="category">Category</label>
+          <select id="rec-category"></select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="frequency">Frequency</label>
+          <select id="rec-frequency" onchange="syncRecFrequencyFields()">
+            <option value="monthly" data-i18n="freq_monthly">Monthly</option>
+            <option value="weekly" data-i18n="freq_weekly">Weekly</option>
+            <option value="yearly" data-i18n="freq_yearly">Yearly</option>
+          </select>
+        </div>
+        <div class="form-group" id="rec-weekday-group" style="display:none">
+          <label data-i18n="day_of_week">Day of week</label>
+          <select id="rec-weekday"></select>
+        </div>
+        <div class="form-group" id="rec-month-group" style="display:none">
+          <label data-i18n="month_label">Month</label>
+          <select id="rec-month"></select>
+        </div>
+        <div class="form-group" id="rec-day-group">
+          <label id="rec-day-label" data-i18n="billing_day">Billing Day (1–31)</label>
+          <input id="rec-day" type="number" min="1" max="31" placeholder="15" />
+        </div>
+        <button type="submit" class="btn" id="rec-submit-btn" data-i18n="add_subscription">Add Subscription</button>
+      </form>
+      <button class="btn btn-outline" onclick="closeSheet('sheet-rec')" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="sheet-budget" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-budget')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="add_budget_title">Add budget</h2>
+      <form id="budget-form">
+        <div class="form-group">
+          <label data-i18n="category">Category</label>
+          <select id="budget-category"></select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="monthly_limit">Monthly Limit</label>
+          <input id="budget-amount" type="number" min="1" step="1" placeholder="0.00" required />
+        </div>
+        <button type="submit" id="budget-submit" class="btn" data-i18n="set_budget">Set Budget</button>
+      </form>
+      <button class="btn btn-outline" onclick="closeSheet('sheet-budget')" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ── PROFILES SHEET ── -->
+  <div id="sheet-profiles" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-profiles')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="profiles">Profiles</h2>
+      <div id="profiles-list" style="margin-bottom:16px"></div>
+      <form id="profile-form">
+        <div class="form-group">
+          <label data-i18n="new_profile">New profile</label>
+          <div class="emoji-picker" id="prof-emoji-picker">
+            <button type="button" class="emoji-btn active" data-emoji="📊">📊</button>
+            <button type="button" class="emoji-btn" data-emoji="💼">💼</button>
+            <button type="button" class="emoji-btn" data-emoji="🏢">🏢</button>
+            <button type="button" class="emoji-btn" data-emoji="🛍️">🛍️</button>
+            <button type="button" class="emoji-btn" data-emoji="🏠">🏠</button>
+            <button type="button" class="emoji-btn" data-emoji="👤">👤</button>
+            <button type="button" class="emoji-btn" data-emoji="👨‍👩‍👧">👨‍👩‍👧</button>
+            <button type="button" class="emoji-btn" data-emoji="🚀">🚀</button>
+            <button type="button" class="emoji-btn" data-emoji="🌱">🌱</button>
+            <button type="button" class="emoji-btn" data-emoji="💡">💡</button>
+          </div>
+          <input type="hidden" id="prof-emoji" value="📊" />
+          <input id="prof-name" type="text" data-i18n-ph="profile_name" placeholder="Business" required autocomplete="off" />
+        </div>
+        <button type="submit" class="btn" data-i18n="add_profile">+ Add profile</button>
+      </form>
+      <button class="btn btn-outline" onclick="closeSheet('sheet-profiles')" data-i18n="done">Done</button>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS SHEET ── -->
+  <div id="sheet-settings" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-settings')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="settings">Settings</h2>
+      <div class="form-group">
+        <label data-i18n="theme">Theme</label>
+        <div class="theme-seg" id="theme-seg">
+          <button type="button" data-theme-mode="light" onclick="setTheme('light')" data-i18n="theme_light">Light</button>
+          <button type="button" data-theme-mode="dark" onclick="setTheme('dark')" data-i18n="theme_dark">Dark</button>
+          <button type="button" data-theme-mode="system" onclick="setTheme('system')" data-i18n="theme_system">System</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="accent">Accent</label>
+        <div class="accent-row" id="accent-row">
+          <button type="button" class="accent-dot" data-a="indigo" onclick="setAccent('indigo')" aria-label="Indigo"></button>
+          <button type="button" class="accent-dot" data-a="emerald" onclick="setAccent('emerald')" aria-label="Emerald"></button>
+          <button type="button" class="accent-dot" data-a="rose" onclick="setAccent('rose')" aria-label="Rose"></button>
+          <button type="button" class="accent-dot" data-a="amber" onclick="setAccent('amber')" aria-label="Amber"></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="language">Language</label>
+        <select id="setting-language">
+          <option value="en">English</option>
+          <option value="pt">Português (BR)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="currency">Currency</label>
+        <select id="setting-currency"></select>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:-4px 0 14px;line-height:1.5" data-i18n="currency_note">Changes how amounts are displayed. Your existing amounts aren't converted.</p>
+      <div class="form-group">
+        <label data-i18n="export_dest">Export files</label>
+        <select id="setting-export">
+          <option value="share" data-i18n="export_share">Share sheet</option>
+          <option value="device" data-i18n="export_device">Save to device (choose folder)</option>
+        </select>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:-4px 0 14px;line-height:1.5" data-i18n="export_note">Applies to CSV and backup exports.</p>
+      <button class="btn" onclick="closeSheet('sheet-settings')" data-i18n="done">Done</button>
+    </div>
+  </div>
+
+
+  <!-- ── ABOUT SHEET ── -->
+  <div id="sheet-about" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-about')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="about">About</h2>
+      <p style="font-weight:600;margin-bottom:6px">Centa · v3.1</p>
+      <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px" data-i18n="about_text">Your money, your data — everything stays on your device. No accounts, no tracking.</p>
+      <button class="btn btn-outline" onclick="closeSheet('sheet-about')" data-i18n="close">Close</button>
+    </div>
+  </div>
+
+  <!-- ── ONBOARDING ── -->
+  <div id="onboarding-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center">
+    <div style="font-size:64px;margin-bottom:16px">💰</div>
+    <h1 style="font-size:26px;font-weight:800;margin-bottom:8px" data-i18n="app_name">Centa</h1>
+    <p style="color:var(--muted);font-size:15px;margin-bottom:32px;line-height:1.6" data-i18n-html="onb_sub">Your money, your data.<br>Everything stays on your device.</p>
+    <div style="width:100%;max-width:320px;text-align:left;margin-bottom:32px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:28px">➕</span>
+        <div><div style="font-weight:600;font-size:14px" data-i18n="onb_f1_t">Add transactions instantly</div><div style="color:var(--muted);font-size:13px" data-i18n="onb_f1_s">Income, expenses & savings in one tap</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:28px">📋</span>
+        <div><div style="font-weight:600;font-size:14px" data-i18n="onb_f2_t">Plan with goals & budgets</div><div style="color:var(--muted);font-size:13px" data-i18n="onb_f2_s">Set targets and track subscriptions</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:28px">📊</span>
+        <div><div style="font-weight:600;font-size:14px" data-i18n="onb_f3_t">Visualize your money</div><div style="color:var(--muted);font-size:13px" data-i18n="onb_f3_s">Charts & spending insights every month</div></div>
+      </div>
+    </div>
+    <button onclick="dismissOnboarding()" class="btn" style="width:100%;max-width:320px;font-size:17px" data-i18n="get_started">Get Started →</button>
+  </div>
+
+  <!-- ── UTILITY DRAWER ── -->
+  <button class="drawer-btn" aria-label="Open menu" onclick="openDrawer()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <input type="file" id="restore-file" accept=".json" style="display:none" />
+  <div id="drawer-overlay" class="drawer-overlay" onclick="if(event.target===this)closeDrawer()">
+    <aside class="drawer">
+      <div class="drawer-head">
+        <span class="drawer-title" data-i18n="app_name">Centa</span>
+        <span class="drawer-ver">v3.1</span>
+      </div>
+      <button class="drawer-item drawer-profile" id="drawer-profile-btn" onclick="closeDrawer();openSheet('sheet-profiles');renderProfilesSheet()">
+        <span id="drawer-profile-emoji">👤</span>
+        <span id="drawer-profile-name" style="flex:1;text-align:left">Personal</span>
+        <span style="color:var(--muted);font-size:12px" data-i18n="switch_profile">Switch</span>
+      </button>
+      <div class="drawer-section" data-i18n="drawer_data">Data</div>
+      <button class="drawer-item" onclick="exportCSV();closeDrawer()"><span>⬇</span> <span data-i18n="export_csv">Export to CSV</span></button>
+      <button class="drawer-item" onclick="exportBackup();closeDrawer()"><span>📦</span> <span data-i18n="export_backup">Export backup</span></button>
+      <button class="drawer-item" onclick="document.getElementById('restore-file').click();closeDrawer()"><span>📥</span> <span data-i18n="import_backup">Import backup</span></button>
+      <div class="drawer-section" data-i18n="drawer_prefs">Preferences</div>
+      <button class="drawer-item" onclick="closeDrawer();openSheet('sheet-settings')"><span>⚙️</span> <span data-i18n="settings">Settings</span></button>
+      <button class="drawer-item" onclick="closeDrawer();openSheet('sheet-about')"><span>ℹ️</span> <span data-i18n="about">About</span></button>
+    </aside>
+  </div>
+
+  <!-- ── FLOATING ADD BUTTON ── -->
+  <div class="fab-wrap">
+    <button class="fab" aria-label="Add transaction">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <button data-page="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span data-i18n="nav_home">Home</span>
+    </button>
+    <button data-page="transactions">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg>
+      <span data-i18n="nav_history">History</span>
+    </button>
+    <button data-page="budgets">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      <span data-i18n="nav_plan">Plan</span>
+    </button>
+  </nav>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- Centa app modules — plain scripts, no bundler; load ORDER MATTERS.
+     data first (defines state/consts used at load time), boot LAST (the init).
+     Everything between is one feature domain per file. See docs/ARCHITECTURE.md. -->
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/profiles.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/core.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/transactions.js"></script>
+<script src="js/plan.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/recurring.js"></script>
+<script src="js/edit.js"></script>
+<script src="js/boot.js"></script>
 </body>
 </html>
