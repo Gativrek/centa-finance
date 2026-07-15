@@ -20,6 +20,7 @@
           : th;
         document.documentElement.dataset.theme = resolved;
         document.documentElement.dataset.accent = localStorage.getItem('ft_accent') || 'indigo';
+        if (localStorage.getItem('ft_lockOn') === '1') document.documentElement.classList.add('locked');
       } catch (e) {}
     })();
   </script>
@@ -502,6 +503,15 @@
         </select>
       </div>
       <p style="font-size:12px;color:var(--muted);margin:-4px 0 14px;line-height:1.5" data-i18n="export_note">Applies to CSV and backup exports.</p>
+      <div class="form-group">
+        <label data-i18n="security">Security</label>
+        <div class="lock-row">
+          <span data-i18n="app_lock">App lock (PIN)</span>
+          <button type="button" id="lock-switch" class="switch" role="switch" aria-checked="false" onclick="toggleLock()"><span class="knob"></span></button>
+        </div>
+        <button type="button" id="change-pin-btn" class="btn btn-outline" style="display:none;width:100%;margin-top:0" onclick="openPinSheet('change')" data-i18n="change_pin">Change PIN</button>
+        <p id="pin-note" style="display:none;font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.5" data-i18n="pin_note">Don't forget your PIN — it can't be recovered.</p>
+      </div>
       <button class="btn" onclick="closeSheet('sheet-settings')" data-i18n="done">Done</button>
     </div>
   </div>
@@ -562,6 +572,17 @@
     </div>
   </div>
 
+  <!-- ── PIN SETUP SHEET ── -->
+  <div id="sheet-pin" class="modal-overlay" onclick="if(event.target===this)cancelPinFlow()">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 id="pin-sheet-title" style="text-align:center">Set a 4-digit PIN</h2>
+      <div class="pin-dots" id="pin-sheet-dots"></div>
+      <div class="pin-pad" id="pin-sheet-pad"></div>
+      <button class="btn btn-outline" onclick="cancelPinFlow()" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+
   <!-- ── ABOUT SHEET ── -->
   <div id="sheet-about" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-about')">
     <div class="modal">
@@ -571,6 +592,14 @@
       <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px" data-i18n="about_text">Your money, your data — everything stays on your device. No accounts, no tracking.</p>
       <button class="btn btn-outline" onclick="closeSheet('sheet-about')" data-i18n="close">Close</button>
     </div>
+  </div>
+
+  <!-- ── LOCK SCREEN ── -->
+  <div id="lock-overlay">
+    <div style="font-size:52px;margin-bottom:12px">🔒</div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px" data-i18n="pin_enter_title">Enter your PIN</h2>
+    <div class="pin-dots" id="lock-dots"></div>
+    <div class="pin-pad" id="lock-pad"></div>
   </div>
 
   <!-- ── ONBOARDING ── -->
@@ -660,6 +689,7 @@
 <script src="js/i18n.js"></script>
 <script src="js/profiles.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/lock.js"></script>
 <script src="js/core.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/transactions.js"></script>

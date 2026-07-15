@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (appTheme === 'system') applyTheme(); });
 
   applyStaticI18n();
+  initLock();
   checkOnboarding();
   syncEyeIcon();
   showPage('dashboard');
