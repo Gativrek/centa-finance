@@ -506,6 +506,61 @@
     </div>
   </div>
 
+  <!-- ── CSV IMPORT SHEET ── -->
+  <div id="sheet-csv" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-csv')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2 data-i18n="csv_import_title">Import from CSV</h2>
+      <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px" data-i18n="csv_import_sub">Match your file's columns, then review the preview below.</p>
+      <div class="form-group">
+        <label class="lock-row" style="cursor:pointer">
+          <span data-i18n="csv_has_header">First row is a header</span>
+          <button type="button" id="csv-header-switch" class="switch" role="switch" aria-checked="true" onclick="toggleCsvHeader()"><span class="knob"></span></button>
+        </label>
+      </div>
+      <div class="form-group">
+        <label data-i18n="csv_col_date">Date column</label>
+        <select id="csv-col-date"></select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="csv_col_amount">Amount column</label>
+        <select id="csv-col-amount"></select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="csv_col_desc">Description column</label>
+        <select id="csv-col-desc"></select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="csv_date_format">Date format</label>
+        <select id="csv-date-fmt">
+          <option value="auto" data-i18n="csv_fmt_auto">Auto-detect</option>
+          <option value="dmy">DD/MM/YYYY</option>
+          <option value="mdy">MM/DD/YYYY</option>
+          <option value="ymd">YYYY-MM-DD</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="lock-row" style="cursor:pointer">
+          <span data-i18n="csv_neg_expense">Negative amounts are expenses</span>
+          <button type="button" id="csv-sign-switch" class="switch" role="switch" aria-checked="true" onclick="toggleCsvSign()"><span class="knob"></span></button>
+        </label>
+      </div>
+      <div class="form-group">
+        <label data-i18n="csv_cat_expense">Category for expenses</label>
+        <select id="csv-cat-expense"></select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="csv_cat_income">Category for income</label>
+        <select id="csv-cat-income"></select>
+      </div>
+      <div class="csv-preview-wrap">
+        <div class="csv-preview-title" data-i18n="csv_preview">Preview</div>
+        <div id="csv-preview"></div>
+      </div>
+      <button class="btn" id="csv-import-btn" onclick="runCsvImport()" data-i18n="csv_do_import">Import</button>
+      <button class="btn btn-outline" onclick="closeSheet('sheet-csv')" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
 
   <!-- ── ABOUT SHEET ── -->
   <div id="sheet-about" class="modal-overlay" onclick="if(event.target===this)closeSheet('sheet-about')">
@@ -545,6 +600,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
   <input type="file" id="restore-file" accept=".json" style="display:none" />
+  <input type="file" id="csv-file" accept=".csv,text/csv,text/plain" style="display:none" />
   <div id="drawer-overlay" class="drawer-overlay" onclick="if(event.target===this)closeDrawer()">
     <aside class="drawer">
       <div class="drawer-head">
@@ -558,6 +614,7 @@
       </button>
       <div class="drawer-section" data-i18n="drawer_data">Data</div>
       <button class="drawer-item" onclick="exportCSV();closeDrawer()"><span>⬇</span> <span data-i18n="export_csv">Export to CSV</span></button>
+      <button class="drawer-item" onclick="closeDrawer();document.getElementById('csv-file').click()"><span>🧾</span> <span data-i18n="import_csv">Import from CSV</span></button>
       <button class="drawer-item" onclick="exportBackup();closeDrawer()"><span>📦</span> <span data-i18n="export_backup">Export backup</span></button>
       <button class="drawer-item" onclick="document.getElementById('restore-file').click();closeDrawer()"><span>📥</span> <span data-i18n="import_backup">Import backup</span></button>
       <div class="drawer-section" data-i18n="drawer_prefs">Preferences</div>
@@ -609,6 +666,7 @@
 <script src="js/plan.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/backup.js"></script>
+<script src="js/csv.js"></script>
 <script src="js/recurring.js"></script>
 <script src="js/edit.js"></script>
 <script src="js/boot.js"></script>

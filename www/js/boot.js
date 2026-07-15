@@ -64,6 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Backup file input (export/backup/restore are triggered from the utility drawer)
   document.getElementById('restore-file').addEventListener('change', importBackup);
 
+  // CSV import (free): file input + live-preview on any mapping change
+  document.getElementById('csv-file').addEventListener('change', handleCsvFile);
+  ['csv-col-date', 'csv-col-amount', 'csv-col-desc', 'csv-date-fmt', 'csv-cat-expense', 'csv-cat-income']
+    .forEach(id => document.getElementById(id).addEventListener('change', renderCsvPreview));
 
   // Currency selector (in Settings sheet)
   const curSel = document.getElementById('setting-currency');
