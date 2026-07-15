@@ -1,0 +1,25 @@
+{
+  "name": "centa-finance",
+  "version": "1.0.0",
+  "description": "Centa — a private, on-device personal finance tracker (bilingual EN/PT). Capacitor web app for Android.",
+  "scripts": {
+    "sync": "npx cap sync android"
+  },
+  "keywords": [
+    "finance",
+    "budget",
+    "capacitor",
+    "android",
+    "offline",
+    "privacy"
+  ],
+  "author": "Gabriel Vieira (@Gativrek)",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1"
+  }
+}

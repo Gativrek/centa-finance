@@ -1,0 +1,19 @@
+# Capacitor generated — rebuild with: npx cap sync android
+android/
+
+# npm dependencies — restore with: npm install
+node_modules/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Signing secrets — keep these safe, never commit them
+*.keystore
+keystore.properties
+
+# IDE / tool metadata
+.claude/
+
+# Local overrides
+*.local

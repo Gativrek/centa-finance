@@ -1,0 +1,8 @@
+{
+  "appId": "app.centa.finance",
+  "appName": "Centa",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
